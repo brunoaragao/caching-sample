@@ -1,0 +1,46 @@
+﻿@page "/"
+
+@using rmdev.ibge.localidades
+@using WebApplication1.Services.Ibge
+
+@inject IIbgeService ibge
+
+<MudSelect T="UF" @bind-Value="estadoSelecionado" Disabled="estadosDesabilitados" SelectedValuesChanged="LoadCitiesAsync">
+    @foreach (var estado in estados)
+    {
+        <MudSelectItem Value="estado">@estado.Sigla</MudSelectItem>
+    }
+</MudSelect>
+
+<MudSelect T="Municipio" @bind-Value="municipioSelecionado" Disabled="municipiosDesabilitados">
+    @foreach (var municipio in municipios)
+    {
+        <MudSelectItem Value="@municipio">@municipio.Nome</MudSelectItem>
+    }
+</MudSelect>
+
+<MudText Typo="Typo.body1">Informações de Localidade: @estadoSelecionado?.Nome @municipioSelecionado?.Nome</MudText>
+
+@code
+{
+    ICollection<UF> estados = [];
+    UF? estadoSelecionado;
+    ICollection<Municipio> municipios = [];
+    Municipio? municipioSelecionado;
+    bool estadosDesabilitados => !estados.Any();
+    bool municipiosDesabilitados => !municipios.Any();
+
+    protected override async Task OnInitializedAsync()
+    {
+        estados = await ibge.BuscarUFsAsync();
+    }
+
+    async Task LoadCitiesAsync()
+    {
+        if (estadoSelecionado is null)
+            return;
+        
+        municipioSelecionado = null;
+        municipios = await ibge.BuscarMunicipioPorUFAsync(estadoSelecionado.Id);
+    }
+}
